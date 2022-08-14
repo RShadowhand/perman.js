@@ -1,4 +1,4 @@
-  export class Perman {
+class Perman {
     /** 
      * @type {Object<string,bigint>}
      */
@@ -115,3 +115,5 @@
       return permissions;
     };
   }
+
+  export { Perman }
