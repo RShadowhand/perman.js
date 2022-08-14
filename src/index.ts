@@ -1,109 +1,117 @@
-export type Permissions = number;
+  export class Perman {
+    /** 
+     * @type {Object<string,bigint>}
+     */
+    _FLAGS;
 
-export class Perman<T extends string> {
-	private readonly _FLAGS: {
-		[key in T]: number;
-	};
+    constructor(flags) {
+      this._FLAGS = flags.reduce((all, key, index) => {
+        const representation = BigInt(2 ** index);
 
-	constructor(flags: T[]) {
-		this._FLAGS = flags.reduce((all, key, index) => {
-			const representation = 2 ** index;
+        return {
+          ...all,
+          [key]: representation,
+        };
+      }, {});
+    }
 
-			return {
-				...all,
-				[key]: representation,
-			};
-		}, {} as Record<T, Permissions>);
-	}
+    static from = (flags)=>
+      new Perman(flags);
 
-	public static from = <T extends string>(flags: T[]): Perman<T> =>
-		new Perman(flags);
+    keys = () => Object.keys(this._FLAGS);
+    values = () => Object.values(this._FLAGS);
+    /** @param {string} flag */
+    get = (flag) => this._FLAGS[flag] ?? -0b1n;
 
-	public keys = (): T[] => Object.keys(this._FLAGS) as T[];
-	public values = (): Permissions[] => Object.values(this._FLAGS);
-	public get = (flag: T): Permissions => this._FLAGS[flag] ?? 0;
+    /** @param {string[]} flags */
+    serialize = (flags) => {
+      if (!flags.length) return 0n;
 
-	public serialize = (flags: T[]): Permissions => {
-		if (!flags.length) return 0;
+      /** @type {bigint} */
+      let res = 0n;
+      // @ts-ignore
+      for (const flag of flags) res |= this.get(flag);
+      return res;
+    };
 
-		let res = 0;
-		for (const flag of flags) res |= this.get(flag);
-		return res;
-	};
+    /** @param {bigint} permissions */
+    deserialize = (permissions) => {
+      if (!permissions) return [];
 
-	public deserialize = (permissions: Permissions): T[] => {
-		if (!permissions) return [];
+      return Object.entries(this._FLAGS)
+        .filter((f) => f[1] === (f[1] & permissions))
+        .map((f) => f[0]);
+    };
 
-		return Object.entries<Permissions>(this._FLAGS)
-			.filter((f) => f[1] === (f[1] & permissions))
-			.map((f) => f[0]) as T[];
-	};
+    match = (permission, flags) => {
+      if (!flags.length) return true;
 
-	public match = (permission: Permissions, flags: T[]): boolean => {
-		if (!flags.length) return true;
+      if (
+        flags.some(
+          (match) => (permission & this.get(match)) != this.get(match),
+        )
+      )
+        return false;
+      return true;
+    };
 
-		if (
-			flags.some(
-				(match) => (permission & this.get(match)) != this.get(match),
-			)
-		)
-			return false;
-		return true;
-	};
+    matchAll = this.match;
+    hasAll = this.match;
 
-	public matchAll = this.match;
-	public hasAll = this.match;
+    some = (permission, flags) => {
+      if (!flags.length) return true;
 
-	public some = (permission: Permissions, flags: T[]): boolean => {
-		if (!flags.length) return true;
+      if (
+        flags.some(
+          (match) => (permission & this.get(match)) == this.get(match),
+        )
+      )
+        return true;
+      return false;
+    };
 
-		if (
-			flags.some(
-				(match) => (permission & this.get(match)) == this.get(match),
-			)
-		)
-			return true;
-		return false;
-	};
+    hasSome = this.some;
 
-	public hasSome = this.some;
+    hasNone = (permission, flags) => {
+      if (!flags.length) return true;
 
-	public hasNone = (permission: Permissions, flags: T[]): boolean => {
-		if (!flags.length) return true;
+      if (
+        flags.some(
+          (match) => (permission & this.get(match)) == this.get(match),
+        )
+      )
+        return false;
+      return true;
+    };
 
-		if (
-			flags.some(
-				(match) => (permission & this.get(match)) == this.get(match),
-			)
-		)
-			return false;
-		return true;
-	};
+    none = this.hasNone;
 
-	public none = this.hasNone;
+    /** 
+     * @param {bigint} permissions
+     * @param {bigint} flag
+     */
+    has = (permissions, flag) => {
+      flag = typeof flag == "bigint" ? flag : this.get(flag);
+      return (permissions & flag) == flag;
+    };
 
-	public has = (permissions: Permissions, flag: Permissions | T): boolean => {
-		flag = typeof flag == "number" ? flag : this.get(flag);
-		return (permissions & flag) == flag;
-	};
+    test = this.has;
 
-	public test = this.has;
+    add = (permission, flag) => {
+      const oldFlags = this.deserialize(permission);
+      const newFlags = [...oldFlags, flag];
+      return this.serialize(newFlags);
+    };
 
-	public add = (permission: Permissions, flag: T): Permissions => {
-		const oldFlags = this.deserialize(permission);
-		const newFlags = [...oldFlags, flag];
-		return this.serialize(newFlags as T[]);
-	};
+    remove = (permission, flag) => {
+      const oldFlags = this.deserialize(permission);
+      const newFlags = oldFlags.filter((f) => f !== flag);
+      return this.serialize(newFlags);
+    };
 
-	public remove = (permission: Permissions, flag: T): Permissions => {
-		const oldFlags = this.deserialize(permission);
-		const newFlags = oldFlags.filter((f) => f !== flag);
-		return this.serialize(newFlags as T[]);
-	};
-
-	public full = (): Permissions => {
-		const allFlags = this.keys();
-		const permissions = this.serialize(allFlags);
-		return permissions;
-	};
-}
+    full = () => {
+      const allFlags = this.keys();
+      const permissions = this.serialize(allFlags);
+      return permissions;
+    };
+  }
