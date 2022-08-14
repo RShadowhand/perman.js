@@ -1,16 +1,16 @@
 {
 	"name": "perman",
-	"version": "1.0.2",
+	"version": "1.1.0",
 	"main": "dist",
 	"typings": "dist",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/barbarbar338/perman.js"
+		"url": "https://github.com/RShadowhand/perman.js"
 	},
 	"author": {
-		"email": "demirci.baris38@gmail.com",
-		"name": "Barış DEMİRCİ",
-		"url": "https://338.rocks"
+		"email": "r.shadowhand@gmail.com",
+		"name": "Shadowhand",
+		"url": "https://secretalgorithm.com"
 	},
 	"license": "GPL-3.0",
 	"description": "🔑 Permission management made easy",
